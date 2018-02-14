@@ -1,0 +1,26 @@
+###########################################
+# Syntax Coloring Map For LiquidCrystal_I2C
+###########################################
+
+###########################################
+# Datatypes (KEYWORD1)
+###########################################
+
+PinDebounceClass	KEYWORD1
+
+###########################################
+# Methods and Functions (KEYWORD2)
+###########################################
+PinDebounceClass	KEYWORD2
+debounce	KEYWORD2
+state	KEYWORD2
+
+_pin	KEYWORD2
+_stateOld	KEYWORD2
+_state	KEYWORD2
+_timeDebounce	KEYWORD2
+_lastChecked	KEYWORD2
+_debounce	KEYWORD2
+###########################################
+# Constants (LITERAL1)
+###########################################

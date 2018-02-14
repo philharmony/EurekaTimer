@@ -1,0 +1,29 @@
+###########################################
+# Syntax Coloring Map For LiquidCrystal_I2C
+###########################################
+
+###########################################
+# Datatypes (KEYWORD1)
+###########################################
+
+EurekaEncoderClass	KEYWORD1
+
+###########################################
+# Methods and Functions (KEYWORD2)
+###########################################
+EurekaEncoderClass	KEYWORD2
+portA	KEYWORD2
+portB	KEYWORD2
+_hasButton	KEYWORD2
+_stateAOld	KEYWORD2
+_stateBOld	KEYWORD2
+_ticks	KEYWORD2
+_update	KEYWORD2
+RotarryValue	KEYWORD2
+ButtonEvent KEYWORD2
+
+
+###########################################
+# Constants (LITERAL1)
+###########################################
+graytab LITERAL

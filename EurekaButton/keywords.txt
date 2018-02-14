@@ -1,0 +1,33 @@
+###########################################
+# Syntax Coloring Map For LiquidCrystal_I2C
+###########################################
+
+###########################################
+# Datatypes (KEYWORD1)
+###########################################
+
+EurekaButtonClass	KEYWORD1
+
+###########################################
+# Methods and Functions (KEYWORD2)
+###########################################
+EurekaButtonClass	KEYWORD2
+_event	KEYWORD2
+_stateOld	KEYWORD2
+_holdset	KEYWORD2
+_lastChange	KEYWORD2
+_timeHold	KEYWORD2
+_timeDown	KEYWORD2
+_timeDebounce	KEYWORD2
+_reset	KEYWORD2
+update KEYWORD2
+state KEYWORD2
+event KEYWORD2
+clicked KEYWORD2
+held KEYWORD2
+released KEYWORD2
+reset KEYWORD2
+
+###########################################
+# Constants (LITERAL1)
+###########################################
