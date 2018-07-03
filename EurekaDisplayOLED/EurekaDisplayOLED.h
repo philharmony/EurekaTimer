@@ -22,6 +22,7 @@ class EurekaDisplayOLEDClass
 	Adafruit_SSD1306 _display;
 	void _drawSingleCup(int left, int top, int level);
 	void _drawDoubleCup(int left, int top, int level);
+	void _drawScreenSaver(unsigned long screenSaverTime);
  public:
 	EurekaDisplayOLEDClass();
 	void begin();
@@ -32,6 +33,7 @@ class EurekaDisplayOLEDClass
 	void showMillingTimeMenu(unsigned long targetTimerSingle, unsigned long targetTimeDouble, bool select);
 	void showSaveEndlessYesNoMenu(bool selYes);
 	void showSaveEndlessSingleDoubleMenu(unsigned long time, bool select);
+	void showScreenSaver(unsigned long screenSaverTime);
 };
 
 #endif

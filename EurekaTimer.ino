@@ -12,27 +12,31 @@ To Do:
 
 
 /*In/Out-Pins, configure as convenient, Pins Analog 4 and 5 are reserved for I2C on Arduino Nano*/
-#define pinMillTrigger 11
-#define pinEncButton 10
-#define pinEncPortA 9
-#define pinEncPortB 8
-#define pinMillRel 12
+#define pinMillTrigger 5//11  //5 for grinder timer layout, 11 for my hand-drawn prototype
+#define pinEncButton 4 //10 //4 for grinder timer layout, 10 for my hand-drawn prototype
+#define pinEncPortA 3 //9 //3 for grinder timer layout, 9 for my hand-drawn prototype
+#define pinEncPortB 2 //8 //2 for grinder timer layout, 8 for my hand-drawn prototype
+#define pinMillRel 7 //12 //7 for grinder timer layout, 7 for my hand-drawn prototype
+
+
+#define SELECTSINGLE true
+#define SELECTDOUBLE false
+#define SELECTSAVE  true
+#define SELECTCANCLE false
 
 /*EEPROM Adresses for remanent storage of times*/
 int EEAdrSingleTime = 0;
-int EEAdrDoubleTime =4;
+int EEAdrDoubleTime = 4;
 
 /*Global Vars*/
 unsigned long targetTimeSingle;
 unsigned long targetTimeDouble;
 int state = 0;
-bool selectSingleDouble = false;
-bool selectSave = false;
+bool selectSingleDouble = SELECTSINGLE;
+bool selectSave = SELECTCANCLE;
 
-#define SELECTSINGLE true
-#define SELECTDOUBLE false
-#define SELECTSAVE	true
-#define SELECTCANCLE false
+
+#define SCREENSAVER_DELAY 60000 //60 sec
 
 /*Using only my own Libs*/
 EurekaDisplayOLEDClass Display;
@@ -43,6 +47,8 @@ EurekaRelaisClass RelMill(pinMillRel);
 EurekaCountdownClass Countdown;
 EurekaStopwatchClass Elapsed;
 EurekaCountdownClass CycleTimer;
+EurekaCountdownClass ScreenSaverDelay;
+EurekaStopwatchClass ScreenSaverElapsed;
 
 
 
@@ -57,7 +63,7 @@ void setup() {
 		EEPROM.put(EEAdrDoubleTime, (unsigned long)0);
 	}
 
-	/*Read times from EEPROM, also done below, could be skipped here but doesn´t harm either*/
+	/*Read times from EEPROM, also done below, could be skipped here but doesnï¿½t harm either*/
 	EEPROM.get(EEAdrSingleTime, targetTimeSingle);
 	EEPROM.get(EEAdrDoubleTime, targetTimeDouble);
 
@@ -83,7 +89,8 @@ typedef enum {
 	STATE_RESUME_ENDLESS,
 	STATE_SAVE_TIME_YES_NO,
 	STATE_SAVE_TIME,
-	STATE_RUN_SETUP
+	STATE_RUN_SETUP,
+	STATE_RUN_SCREENSAVER
 };
 
 void loop() {
@@ -108,6 +115,8 @@ void loop() {
 			EncSettings.buttonReset();
 			Countdown.reset();
 			RelMill.setoff();
+      selectSingleDouble = SELECTSINGLE;
+			ScreenSaverDelay.set(SCREENSAVER_DELAY);
 			EEPROM.get(EEAdrSingleTime, targetTimeSingle);
 			EEPROM.get(EEAdrDoubleTime, targetTimeDouble);
 			state = STATE_RESET;
@@ -119,10 +128,13 @@ void loop() {
 			EncSettings.buttonReset();
 			Countdown.reset();
 			Elapsed.reset();
+			ScreenSaverDelay.reset();
+			ScreenSaverElapsed.reset();
 			RelMill.setoff();
-			selectSave = false;
+			selectSave = SELECTCANCLE;
 			/*Draw display*/
 			Display.showReadyScreen(targetTimeSingle, targetTimeDouble, selectSingleDouble);
+      ScreenSaverDelay.start();
 			state = STATE_READY;
 			break;
 
@@ -130,7 +142,7 @@ void loop() {
 			/*Here we are most of the time, waiting for any user imput*/
 			if (BtnMillTrigger.clicked())
 			{
-				/*If Milltrigger clicked, load timer depending if signle or double is active, update screen and let it run*/
+				/*If Milltrigger clicked, load timer depending if single or double is active, update screen and let it run*/
 				if (selectSingleDouble == SELECTSINGLE) Countdown.set(targetTimeSingle);
 				else Countdown.set(targetTimeDouble);
 				Countdown.start();
@@ -154,7 +166,7 @@ void loop() {
 			{
 				selectSingleDouble = !selectSingleDouble;
 				Display.showReadyScreen(targetTimeSingle, targetTimeDouble, selectSingleDouble);
-
+        ScreenSaverDelay.start();
 			}
 
 			/*If button held (long press, default 750millis, change above if needed) enter setup*/
@@ -163,6 +175,14 @@ void loop() {
 				Display.showMillingTimeMenu(targetTimeSingle, targetTimeDouble, selectSingleDouble);
 				state = STATE_RUN_SETUP;
 			}
+
+		   /*If Screensaver Delay Time is up, show screensaver*/
+		   if (ScreenSaverDelay.timeIsUp())
+		   {
+				ScreenSaverElapsed.start();
+				state = STATE_RUN_SCREENSAVER;
+		   }  
+     
 			break;
 
 			/*Just update the time and cup symbol until time is up or milltrigger or button is being clicked. Then stop end reset*/
@@ -226,10 +246,18 @@ void loop() {
 
 			if (EncSettings.buttonClicked())
 			{
-				if (selectSingleDouble == SELECTSINGLE)	EEPROM.put(EEAdrSingleTime, Elapsed.timeElapsed());
-				else EEPROM.put(EEAdrDoubleTime, Elapsed.timeElapsed());
+				if (selectSingleDouble == SELECTSINGLE)	
+				{
+          targetTimeSingle = Elapsed.timeElapsed();
+				  EEPROM.put(EEAdrSingleTime, targetTimeSingle);
+				}
+				else 
+				{
+				  targetTimeDouble = Elapsed.timeElapsed();
+				  EEPROM.put(EEAdrDoubleTime, targetTimeDouble);
+				}
 				Elapsed.reset();				
-				state = STATE_INIT;
+				state = STATE_RESET;
 			}
 			if (EncSettings.rotaryValue())
 			{
@@ -249,12 +277,18 @@ void loop() {
 
 			/*Long press in ready mode enters time setup of selected timer (single or double)*/
 			/*Turning changes time, click saves, long press aborts*/
-			case STATE_RUN_SETUP:
+		case STATE_RUN_SETUP:
 			if (EncSettings.buttonClicked())
 			{
-				if (selectSingleDouble == SELECTSINGLE) EEPROM.put(EEAdrSingleTime, targetTimeSingle);
-				else EEPROM.put(EEAdrDoubleTime, targetTimeDouble);
-				state = STATE_INIT;
+				if (selectSingleDouble == SELECTSINGLE)
+				{
+				  EEPROM.put(EEAdrSingleTime, targetTimeSingle);
+				}
+				else 
+				{
+				  EEPROM.put(EEAdrDoubleTime, targetTimeDouble);
+				}
+				state = STATE_RESET;
 				break;
 			}
 			if (EncSettings.buttonHeld())
@@ -264,15 +298,37 @@ void loop() {
 			}
 			if (EncSettings.hasRotaryValue())
 			{
-				if (selectSingleDouble == SELECTSINGLE) targetTimeSingle = targetTimeSingle + (EncSettings.rotaryValue() * 100);
-				else targetTimeDouble = targetTimeDouble + (EncSettings.rotaryValue() * 100);
+        /*Read value from encoder (+1, 0, -1)*/
+        int val = EncSettings.rotaryValue() * 100;
+				if (selectSingleDouble == SELECTSINGLE) 
+				{
+        /*Prevent underrun zero*/
+          if ((val < 0) && (abs(val) > targetTimeSingle)) targetTimeSingle = 0;
+          else targetTimeSingle = targetTimeSingle + val;
+				}
+				else 
+				{
+          if ((val < 0) && (abs(val) > targetTimeDouble)) targetTimeDouble = 0;
+          else targetTimeDouble = targetTimeDouble + val;
+				}
 				Display.showMillingTimeMenu(targetTimeSingle, targetTimeDouble, selectSingleDouble);
 			}
 			break;
-
-			/*Any other state wherever it might come from resets*/
-		default:
+      
+		case STATE_RUN_SCREENSAVER:
+			if (BtnMillTrigger.clicked() || BtnMillTrigger.held() || EncSettings.buttonClicked() || EncSettings.buttonHeld() || EncSettings.rotaryValue())
+			{
 			state = STATE_RESET;
+			}
+			else
+			{
+			Display.showScreenSaver(ScreenSaverElapsed.timeElapsed());
+			}
+			break;
+
+			/*Any other state wherever it might come from resets to init_state*/
+		default:
+			state = STATE_INIT;
 			break;
 		}
 	}

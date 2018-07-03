@@ -50,6 +50,17 @@ void EurekaDisplayOLEDClass::_drawDoubleCup(int left, int top, int level)
 	this->_drawSingleCup(left, top + 3, level);
 }
 
+void EurekaDisplayOLEDClass::_drawScreenSaver(unsigned long screenSaverTime)
+{
+	//Uneven numbers to prevent patterns on the screen!
+	int left = (screenSaverTime / 241) % 178;
+	if (left > 89) left = 89 - (left - 89);
+	int top = (screenSaverTime / 189) % 64;
+	if (top > 32) top = 32 - (top - 32);
+	if ((screenSaverTime / 60000) %  2) this->_drawSingleCup(left, top, (screenSaverTime / 200) % 90);
+	else this->_drawDoubleCup(left, top, (screenSaverTime / 200) % 90);
+}
+
 void EurekaDisplayOLEDClass::showWelcomeScreen()
 {
 	_display.clearDisplay();
@@ -167,6 +178,13 @@ void EurekaDisplayOLEDClass::showSaveEndlessSingleDoubleMenu(unsigned long time,
 	_display.print(F(":"));
 	if (select)	this->_drawSingleCup(40, 26, 0);
 	else this->_drawDoubleCup(32, 24, 0);
+	_display.display();
+}
+
+void EurekaDisplayOLEDClass::showScreenSaver(unsigned long screenSaverTime)
+{
+	_display.clearDisplay();
+	this->_drawScreenSaver(screenSaverTime);
 	_display.display();
 }
 
